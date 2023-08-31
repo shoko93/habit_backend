@@ -33,5 +33,7 @@ module TamusubiBackend
           methods: [:get, :post, :options, :head]
       end
     end
+
+    config.time_zone = 'Tokyo'
   end
 end
