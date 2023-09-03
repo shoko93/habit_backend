@@ -34,6 +34,7 @@ module TamusubiBackend
       end
     end
 
+    config.active_record.default_timezone = :utc
     config.time_zone = 'Tokyo'
   end
 end

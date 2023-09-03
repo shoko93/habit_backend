@@ -1,4 +1,8 @@
 class PostsController < ApplicationController
+    def index
+        render json: Post.all
+    end
+    
     def create
         if !post_params[:line_id_token].nil?
             data = {id_token: post_params[:line_id_token], client_id: '2000560013'}
