@@ -2,10 +2,10 @@ class PostsController < ApplicationController
     def index
         render json: Post.all
     end
-    
+
     def create
         if !post_params[:line_id_token].nil?
-            data = {id_token: post_params[:line_id_token], client_id: '2000560013'}
+            data = {id_token: post_params[:line_id_token], client_id: ENV["LINE_CLIENT_ID"]}
             uri = URI.parse("https://api.line.me/oauth2/v2.1/verify")
             response = Net::HTTP.post_form(uri, data)
             puts JSON.parse(response.body)
