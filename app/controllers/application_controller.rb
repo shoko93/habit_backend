@@ -3,6 +3,7 @@ class ApplicationController < ActionController::API
         data = {id_token: line_id_token, client_id: ENV["LINE_CLIENT_ID"]}
         uri = URI.parse("https://api.line.me/oauth2/v2.1/verify")
         response = Net::HTTP.post_form(uri, data)
+        puts response.body
         if response.code == "200"
             response_json = JSON.parse(response.body)
         else
