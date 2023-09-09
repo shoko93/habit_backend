@@ -35,7 +35,7 @@ class PostsController < ApplicationController
         else
             return response_internal_server_error
         end
-        json = post.as_json
+        json = post.as_json(include: :tags)
         json[:like] = !like.nil?
         json[:bookmark] = !bookmark.nil?
         render json: json
@@ -43,6 +43,7 @@ class PostsController < ApplicationController
 
     def create
         if !create_params[:line_id_token].nil?
+            puts create_params[:line_id_token]
             response_json = verify_line_id_token(create_params[:line_id_token])
             if !response_json.nil?
                 line_id = response_json["sub"]
@@ -56,6 +57,16 @@ class PostsController < ApplicationController
 
         post = Post.new(title: create_params[:title], text_body: create_params[:text_body], line_id: line_id)
         post.save
+
+        create_params[:tags].each do |tag|
+            if !Tag.exists?(tag: tag)
+                new_tag = Tag.new(tag: tag)
+                new_tag.save
+            end
+            post_tag = PostsTag.new(post_id: post.id, tag_id: Tag.find_by(tag: tag).id)
+            post_tag.save
+        end
+
         response_success(:post, :create)
     end
 
@@ -118,7 +129,7 @@ class PostsController < ApplicationController
     end 
 
     def create_params
-        params.require(:post).permit(:title, :text_body, :line_id_token)
+        params.require(:post).permit!
     end
 
     def like_params
@@ -152,7 +163,7 @@ class PostsController < ApplicationController
             bookmarks = likes_and_bookmarks[:bookmarks]
             posts_result = Array.new
             posts.map do |item|
-                json = item.as_json
+                json = item.as_json(include: :tags)
                 if likes.select{|like| like.post_id == item.id}.length > 0
                     json[:like] = true
                 else

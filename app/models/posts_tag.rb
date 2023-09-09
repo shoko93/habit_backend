@@ -1,0 +1,2 @@
+class PostsTag < ApplicationRecord
+end

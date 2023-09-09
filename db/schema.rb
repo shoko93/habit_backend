@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_09_09_070601) do
+ActiveRecord::Schema[7.0].define(version: 2023_09_09_093909) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -44,6 +44,19 @@ ActiveRecord::Schema[7.0].define(version: 2023_09_09_070601) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "posts_tags", force: :cascade do |t|
+    t.integer "post_id"
+    t.integer "tag_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "tags", force: :cascade do |t|
+    t.text "tag"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   create_table "users", force: :cascade do |t|
     t.text "line_id", null: false
     t.text "name"
@@ -57,4 +70,6 @@ ActiveRecord::Schema[7.0].define(version: 2023_09_09_070601) do
   add_foreign_key "post_comments", "users", column: "line_id", primary_key: "line_id"
   add_foreign_key "post_likes", "posts"
   add_foreign_key "posts", "users", column: "line_id", primary_key: "line_id"
+  add_foreign_key "posts_tags", "posts"
+  add_foreign_key "posts_tags", "tags"
 end
