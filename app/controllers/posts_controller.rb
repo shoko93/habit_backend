@@ -1,33 +1,173 @@
 class PostsController < ApplicationController
     def index
-        render json: Post.all
+        line_id_token = params[:line_id_token]
+        posts = set_like_and_bookmark(Post.all, line_id_token)
+        if !posts.nil?
+            render json: posts
+        else
+            response_internal_server_error
+        end
+    end
+
+    def bookmarks
+        line_id_token = params[:line_id_token]
+        response_json = verify_line_id_token(line_id_token)
+        if !response_json.nil?
+            bookmarks = PostBookmark.select(:id).where(line_id:response_json["sub"])
+        else
+            return response_internal_server_error
+        end
+        post_ids = Array.new
+        bookmarks.map do |item|
+            post_ids.push(item.id)
+        end
+        posts = set_like_and_bookmark(Post.where(id: post_ids), line_id_token)
+        render json: posts
+    end
+
+    def get
+        line_id_token = params[:line_id_token]
+        post = Post.find(params[:id])
+        response_json = verify_line_id_token(line_id_token)
+        if !response_json.nil?
+            bookmark = PostBookmark.find_by(line_id: response_json["sub"], post_id: params[:id])
+            like = PostLike.find_by(line_id: response_json["sub"], post_id: params[:id])
+        else
+            return response_internal_server_error
+        end
+        json = post.as_json
+        json[:like] = !like.nil?
+        json[:bookmark] = !bookmark.nil?
+        render json: json
     end
 
     def create
-        if !post_params[:line_id_token].nil?
-            data = {id_token: post_params[:line_id_token], client_id: ENV["LINE_CLIENT_ID"]}
-            uri = URI.parse("https://api.line.me/oauth2/v2.1/verify")
-            response = Net::HTTP.post_form(uri, data)
-            if response.code == "200"
-                response_json = JSON.parse(response.body)
+        if !create_params[:line_id_token].nil?
+            response_json = verify_line_id_token(create_params[:line_id_token])
+            if !response_json.nil?
                 line_id = response_json["sub"]
-                if !User.exists?(line_id: line_id)
-                    user = User.new(line_id: line_id, name: response_json["name"])
-                    user.save
-                end
+                set_user_name(line_id, response_json["name"])
             else
-                response_internal_server_error
+                return response_internal_server_error
             end
         else
             line_id = nil
         end
 
-        post = Post.new(title: post_params[:title], text_body: post_params[:text_body], line_id: line_id)
+        post = Post.new(title: create_params[:title], text_body: create_params[:text_body], line_id: line_id)
         post.save
         response_success(:post, :create)
     end
 
-    def post_params
+    def bookmark
+        if !bookmark_params[:line_id_token].nil?
+            response_json = verify_line_id_token(bookmark_params[:line_id_token])
+            if !response_json.nil?
+                line_id = response_json["sub"]
+                set_user_name(line_id, response_json["name"])
+            else
+                return response_internal_server_error
+            end
+        else
+            line_id = nil
+        end
+
+        if !PostBookmark.exists?(line_id: line_id, post_id: bookmark_params[:post_id])
+            post_bookmark = PostBookmark.new(post_id: bookmark_params[:post_id], line_id: line_id)
+            post_bookmark.save
+        end
+        response_success(:post, :bookmark)
+    end
+
+    def like
+        if !like_params[:line_id_token].nil?
+            response_json = verify_line_id_token(like_params[:line_id_token])
+            if !response_json.nil?
+                line_id = response_json["sub"]
+                set_user_name(line_id, response_json["name"])
+            else
+                return response_internal_server_error
+            end
+        else
+            line_id = nil
+        end
+
+        if !PostLike.exists?(line_id: line_id, post_id: like_params[:post_id])
+            post_like = PostLike.new(post_id: like_params[:post_id], line_id: line_id)
+            post_like.save
+        end
+        response_success(:post, :like)
+    end
+
+    def comment
+        response_json = verify_line_id_token(comment_params[:line_id_token])
+        if !response_json.nil?
+            line_id = response_json["sub"]
+            set_user_name(line_id, response_json["name"])
+        else
+            return response_internal_server_error
+        end
+
+        post_comment = PostComment.new(post_id: comment_params[:post_id], comment: comment_params[:comment], line_id: line_id)
+        post_comment.save()
+    end
+
+    def comments
+        comments = PostComment.where(post_id: params[:id])
+        render json: comments.as_json(include: :user)
+    end 
+
+    def create_params
         params.require(:post).permit(:title, :text_body, :line_id_token)
+    end
+
+    def like_params
+        params.require(:like).permit(:post_id, :line_id_token)
+    end
+
+    def bookmark_params
+        params.require(:bookmark).permit(:post_id, :line_id_token)
+    end
+
+    def comment_params
+        params.require(:comment).permit(:post_id, :comment, :line_id_token)
+    end
+
+    def get_likes_and_bookmarks(line_id_token)
+        response_json = verify_line_id_token(line_id_token)
+        if !response_json.nil?
+            line_id = response_json["sub"]
+            likes = PostLike.where(line_id: response_json["sub"])
+            bookmarks = PostBookmark.where(line_id: response_json["sub"])
+            return {:likes => likes, :bookmarks => bookmarks}
+        else
+            return nil
+        end
+    end
+
+    def set_like_and_bookmark(posts, line_id_token)
+        likes_and_bookmarks = get_likes_and_bookmarks(line_id_token)
+        if !likes_and_bookmarks.nil?
+            likes = likes_and_bookmarks[:likes]
+            bookmarks = likes_and_bookmarks[:bookmarks]
+            posts_result = Array.new
+            posts.map do |item|
+                json = item.as_json
+                if likes.select{|like| like.post_id == item.id}.length > 0
+                    json[:like] = true
+                else
+                    json[:like] = false
+                end
+                if bookmarks.select{|bookmark| bookmark.post_id == item.id}.length > 0
+                    json[:bookmark] = true
+                else
+                    json[:bookmark] = false
+                end
+                posts_result.push(json)
+            end
+            posts_result
+        else
+            return nil
+        end
     end
 end

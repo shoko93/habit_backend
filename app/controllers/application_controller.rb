@@ -1,4 +1,22 @@
 class ApplicationController < ActionController::API
+    def verify_line_id_token(line_id_token)
+        data = {id_token: line_id_token, client_id: ENV["LINE_CLIENT_ID"]}
+        uri = URI.parse("https://api.line.me/oauth2/v2.1/verify")
+        response = Net::HTTP.post_form(uri, data)
+        if response.code == "200"
+            response_json = JSON.parse(response.body)
+        else
+            response_json = nil
+        end
+    end
+
+    def set_user_name(line_id, name)
+        if !User.exists?(line_id: line_id)
+            user = User.new(line_id: line_id, name: name)
+            user.save
+        end
+    end
+
     # 200 Success
     def response_success(class_name, action_name)
         render status: 200, json: { status: 200, message: "Success #{class_name.capitalize} #{action_name.capitalize}" }
