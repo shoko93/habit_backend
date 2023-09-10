@@ -67,7 +67,13 @@ class PostsController < ApplicationController
             post_tag.save
         end
 
-        response_success(:post, :create)
+        render json: post
+    end
+
+    def image
+        post = Post.find(params[:id])
+        post.update(image: params[:image])
+        response_success(:post, :image)
     end
 
     def bookmark

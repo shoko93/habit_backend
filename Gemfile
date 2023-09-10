@@ -40,6 +40,8 @@ gem 'dotenv-rails'
 gem 'pg'
 gem 'net-http'
 gem 'rack-cors'
+gem 'carrierwave'
+gem 'fog-aws'
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem

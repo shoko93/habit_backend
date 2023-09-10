@@ -7,6 +7,7 @@ Rails.application.routes.draw do
   post "/posts/bookmarks", to: "posts#bookmarks"
   post "/posts/comment", to: "posts#comment"
   get "/posts/:id/comments", to: "posts#comments"
+  post "/posts/image", to: "posts#image"
   post "/posts/:id", to: "posts#get"
   # Defines the root path route ("/")
   # root "articles#index"
