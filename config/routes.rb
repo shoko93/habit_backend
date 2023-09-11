@@ -8,7 +8,10 @@ Rails.application.routes.draw do
   post "/posts/comment", to: "posts#comment"
   get "/posts/:id/comments", to: "posts#comments"
   post "/posts/image", to: "posts#image"
+  post "/posts/search", to: "posts#search"
   post "/posts/:id", to: "posts#get"
+  patch "/posts/:id", to: "posts#update"
+  delete "/posts/:id", to: "posts#delete"
   # Defines the root path route ("/")
   # root "articles#index"
 end

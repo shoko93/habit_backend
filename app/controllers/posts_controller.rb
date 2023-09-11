@@ -9,6 +9,40 @@ class PostsController < ApplicationController
         end
     end
 
+    def search
+        line_id_token = params[:line_id_token]
+        keyword = params[:keyword]
+        tags = params[:tags]
+        if !keyword.nil? && !keyword.empty? && !tags.nil? && !tags.empty?
+            ids = Post.select(:id).includes(:tags)
+                        .where("title like ? or text_body like ?", "%" + keyword + "%", "%" + keyword + "%")
+                        .where("tags.tag in (?)", tags).references(:tags)
+            post_ids = Array.new
+            ids.map do |item|
+                post_ids.push(item.id)
+            end
+            posts = Post.where(id: post_ids)
+        elsif !keyword.nil? && !keyword.empty?
+            posts = Post.where("title like ? or text_body like ?", "%" + keyword + "%", "%" + keyword + "%")
+        elsif !tags.nil? && !tags.empty?
+            ids = Post.select(:id).includes(:tags).where("tags.tag in (?)", tags).references(:tags)
+            post_ids = Array.new
+            ids.map do |item|
+                post_ids.push(item.id)
+            end
+            posts = Post.where(id: post_ids)
+        else
+            posts = Post.all
+        end
+
+        posts = set_like_and_bookmark(posts, line_id_token)
+        if !posts.nil?
+            render json: posts
+        else
+            response_internal_server_error
+        end
+    end
+
     def bookmarks
         line_id_token = params[:line_id_token]
         response_json = verify_line_id_token(line_id_token)
@@ -43,7 +77,6 @@ class PostsController < ApplicationController
 
     def create
         if !create_params[:line_id_token].nil?
-            puts create_params[:line_id_token]
             response_json = verify_line_id_token(create_params[:line_id_token])
             if !response_json.nil?
                 line_id = response_json["sub"]
@@ -74,6 +107,32 @@ class PostsController < ApplicationController
         post = Post.find(params[:id])
         post.update(image: params[:image])
         response_success(:post, :image)
+    end
+
+    def update
+        response_json = verify_line_id_token(create_params[:line_id_token])
+        if !response_json.nil?
+            line_id = response_json["sub"]
+            set_user_name(line_id, response_json["name"])
+        else
+            return response_internal_server_error
+        end
+        
+        post = Post.find(params[:id])
+        post.update(title: update_params[:title], text_body: update_params[:text_body], line_id: line_id)
+        
+        update_params[:tags].each do |tag|
+            if !Tag.exists?(tag: tag)
+                new_tag = Tag.new(tag: tag)
+                new_tag.save
+            end
+            if !PostsTag.exists?(tag_id: Tag.find_by(tag: tag).id, post_id: params[:id])
+                post_tag = PostsTag.new(post_id: params[:id], tag_id: Tag.find_by(tag: tag).id)
+                post_tag.save
+            end
+        end
+
+        response_success(:post, :update)
     end
 
     def bookmark
@@ -134,7 +193,17 @@ class PostsController < ApplicationController
         render json: comments.as_json(include: :user)
     end 
 
+    def delete
+        Post.find(params[:id]).destroy
+        PostsTag.where(post_id: params[:id]).delete_all
+        response_success(:post, :delete)
+    end
+
     def create_params
+        params.require(:post).permit!
+    end
+
+    def update_params
         params.require(:post).permit!
     end
 
