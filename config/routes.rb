@@ -12,6 +12,7 @@ Rails.application.routes.draw do
   post "/posts/:id", to: "posts#get"
   patch "/posts/:id", to: "posts#update"
   delete "/posts/:id", to: "posts#delete"
+  get "/tags", to: "tags#index"
   # Defines the root path route ("/")
   # root "articles#index"
 end
