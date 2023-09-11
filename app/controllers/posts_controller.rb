@@ -155,6 +155,19 @@ class PostsController < ApplicationController
         response_success(:post, :bookmark)
     end
 
+    def unbookmark
+        response_json = verify_line_id_token(params[:line_id_token])
+        if !response_json.nil?
+            line_id = response_json["sub"]
+            set_user_name(line_id, response_json["name"])
+        else
+            return response_internal_server_error
+        end
+        post_bookmark = PostBookmark.find_by(line_id: line_id, post_id: params[:id])
+        post_bookmark.delete
+        response_success(:post, :unbookmark)
+    end
+
     def like
         if !like_params[:line_id_token].nil?
             response_json = verify_line_id_token(like_params[:line_id_token])
@@ -173,6 +186,19 @@ class PostsController < ApplicationController
             post_like.save
         end
         response_success(:post, :like)
+    end
+
+    def unlike
+        response_json = verify_line_id_token(params[:line_id_token])
+        if !response_json.nil?
+            line_id = response_json["sub"]
+            set_user_name(line_id, response_json["name"])
+        else
+            return response_internal_server_error
+        end
+        post_like = PostLike.find_by(line_id: line_id, post_id: params[:id])
+        post_like.delete
+        response_success(:post, :unlike)
     end
 
     def comment

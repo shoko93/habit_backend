@@ -9,6 +9,8 @@ Rails.application.routes.draw do
   get "/posts/:id/comments", to: "posts#comments"
   post "/posts/image", to: "posts#image"
   post "/posts/search", to: "posts#search"
+  delete "/posts/:id/like", to: "posts#unlike"
+  delete "/posts/:id/bookmark", to: "posts#unbookmark"
   post "/posts/:id", to: "posts#get"
   patch "/posts/:id", to: "posts#update"
   delete "/posts/:id", to: "posts#delete"
