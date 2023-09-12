@@ -30,7 +30,7 @@ module TamusubiBackend
         origins "*"
         resource "*",
           headers: :any,
-          methods: [:get, :post, :options, :head, :delete, :patch]
+          methods: [:get, :post, :options, :head, :delete, :patch, :put]
       end
     end
 
