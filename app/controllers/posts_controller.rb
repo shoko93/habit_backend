@@ -47,13 +47,13 @@ class PostsController < ApplicationController
         line_id_token = params[:line_id_token]
         response_json = verify_line_id_token(line_id_token)
         if !response_json.nil?
-            bookmarks = PostBookmark.select(:id).where(line_id:response_json["sub"])
+            bookmarks = PostBookmark.select(:post_id).where(line_id:response_json["sub"])
         else
             return response_internal_server_error
         end
         post_ids = Array.new
         bookmarks.map do |item|
-            post_ids.push(item.id)
+            post_ids.push(item.post_id)
         end
         posts = set_like_and_bookmark(Post.where(id: post_ids), line_id_token)
         render json: posts
