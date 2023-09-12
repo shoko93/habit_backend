@@ -69,7 +69,7 @@ class PostsController < ApplicationController
         else
             return response_internal_server_error
         end
-        json = post.as_json(include: :tags)
+        json = post.as_json(include: [:tags, :user])
         json[:like] = !like.nil?
         json[:bookmark] = !bookmark.nil?
         render json: json
@@ -264,7 +264,7 @@ class PostsController < ApplicationController
             bookmarks = likes_and_bookmarks[:bookmarks]
             posts_result = Array.new
             posts.map do |item|
-                json = item.as_json(include: :tags)
+                json = item.as_json(include: [:tags, :user])
                 if likes.select{|like| like.post_id == item.id}.length > 0
                     json[:like] = true
                 else
