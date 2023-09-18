@@ -1,7 +1,7 @@
 class PostsController < ApplicationController
     def index
         line_id_token = params[:line_id_token]
-        posts = set_like_and_bookmark(Post.all, line_id_token)
+        posts = set_like_and_bookmark(Post.order(updated_at: :DESC), line_id_token)
         if !posts.nil?
             render json: posts
         else
@@ -212,11 +212,29 @@ class PostsController < ApplicationController
 
         post_comment = PostComment.new(post_id: comment_params[:post_id], comment: comment_params[:comment], line_id: line_id)
         post_comment.save()
+        render json: post_comment
     end
 
     def comments
-        comments = PostComment.where(post_id: params[:id])
-        render json: comments.as_json(include: :user)
+        comments = PostComment.where(post_id: params[:id]).order(:created_at)
+        response_json = verify_line_id_token(params[:line_id_token])
+        if !response_json.nil?
+            line_id = response_json["sub"]
+            likes = CommentLike.where(line_id: response_json["sub"])
+            comments_result = Array.new
+            comments.map do |item|
+                json = item.as_json(include: [:user])
+                if likes.select{|like| like.comment_id == item.id}.length > 0
+                    json[:like] = true
+                else
+                    json[:like] = false
+                end
+                comments_result.push(json)
+            end
+        else
+            return response_internal_server_error
+        end
+        render json: comments_result
     end 
 
     def delete

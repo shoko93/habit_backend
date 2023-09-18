@@ -6,7 +6,7 @@ Rails.application.routes.draw do
   post "/posts/bookmark", to: "posts#bookmark"
   post "/posts/bookmarks", to: "posts#bookmarks"
   post "/posts/comment", to: "posts#comment"
-  get "/posts/:id/comments", to: "posts#comments"
+  post "/posts/:id/comments", to: "posts#comments"
   post "/posts/image", to: "posts#image"
   post "/posts/search", to: "posts#search"
   delete "/posts/:id/like", to: "posts#unlike"
@@ -17,6 +17,11 @@ Rails.application.routes.draw do
   get "/tags", to: "tags#index"
   post "/users", to: "users#get"
   put "/users", to: "users#update"
+  post "/comments/like", to: "comments#like"
+  post "/comments/image", to: "comments#image"
+  delete "/comments/:id/like", to: "comments#unlike"
+  delete "/comments/:id", to: "comments#delete"
+  patch "/comments/:id", to: "comments#update"
   # Defines the root path route ("/")
   # root "articles#index"
 end
