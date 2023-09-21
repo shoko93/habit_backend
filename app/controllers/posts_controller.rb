@@ -55,7 +55,7 @@ class PostsController < ApplicationController
         bookmarks.map do |item|
             post_ids.push(item.post_id)
         end
-        posts = set_like_and_bookmark(Post.where(id: post_ids), line_id_token)
+        posts = set_like_and_bookmark(Post.where(id: post_ids).order(updated_at: :DESC), line_id_token)
         render json: posts
     end
 
