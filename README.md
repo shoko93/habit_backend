@@ -1,24 +1,5 @@
-# README
+# 畑-habit- SNSアプリ
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+LIFFアプリのバックエンドです。（LINEのログインが必要です）
+https://liff.line.me/2000560013-na3ERAEL
 
-Things you may want to cover:
-
-* Ruby version
-
-* System dependencies
-
-* Configuration
-
-* Database creation
-
-* Database initialization
-
-* How to run the test suite
-
-* Services (job queues, cache servers, search engines, etc.)
-
-* Deployment instructions
-
-* ...
